@@ -1,0 +1,156 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "eventHubNamespace": {
+      "type": "string"
+    },
+    "databricksWorkspaceName" :{
+      "type":"string"
+    },
+    "outputCosmosDatabaseAccount": {
+      "type": "string"
+    }
+  },
+  "variables": {
+    "eventHubNames": [
+      "taxi-ride-eh",
+      "taxi-fare-eh",
+      "taxi-invalid-eh"
+    ],
+    "copy": [
+        {
+            "name": "eventHubs",
+            "count": "[length(variables('eventHubNames'))]",
+            "input": {
+                "name": "[concat(parameters('eventHubNamespace'), '/', variables('eventHubNames')[copyIndex('eventHubs')])]",
+                "consumerGroupName": "[concat(parameters('eventHubNamespace'), '/', variables('eventHubNames')[copyIndex('eventHubs')], '/', concat(variables('eventHubNames')[copyIndex('eventHubs')], '-cg'))]",
+                "authorizationRuleName": "[concat(parameters('eventHubNamespace'), '/', variables('eventHubNames')[copyIndex('eventHubs')], '/', concat(variables('eventHubNames')[copyIndex('eventHubs')], '-ap'))]",
+                "authorizationRuleResourceId": "[resourceId('Microsoft.EventHub/namespaces/eventHubs/authorizationRules', parameters('eventHubNamespace'), variables('eventHubNames')[copyIndex('eventHubs')], concat(variables('eventHubNames')[copyIndex('eventHubs')], '-ap'))]"
+            }
+        }
+    ],
+    "dataBricksResourceGroup": "[concat(resourceGroup().name, '-', parameters('databricksWorkspaceName'), '-', uniqueString(resourceGroup().name, '-', parameters('databricksWorkspaceName')))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.EventHub/namespaces",
+      "name": "[parameters('eventHubNamespace')]",
+      "apiVersion": "2017-04-01",
+      "location": "[resourceGroup().location]",
+      "sku": {
+        "name": "Standard",
+        "tier": "Standard"
+      }
+    },
+    {
+      "type": "Microsoft.EventHub/namespaces/eventhubs",
+      "name": "[variables('eventHubs')[copyIndex()].name]",
+      "apiVersion": "2017-04-01",
+      "copy": {
+        "count": "[length(variables('eventHubs'))]",
+        "mode": "Parallel",
+        "name": "eventHubs"
+      },
+      "properties": {
+        "messageRetentionInDays": 3,
+        "partitionCount": 8
+      },
+      "dependsOn": [
+        "[parameters('eventHubNamespace')]"
+      ]
+    },
+    {
+      "type": "Microsoft.EventHub/namespaces/eventhubs/consumergroups",
+      "name": "[variables('eventHubs')[copyIndex()].consumerGroupName]",
+      "apiVersion": "2017-04-01",
+      "copy": {
+        "count": "[length(variables('eventHubs'))]",
+        "mode": "Parallel",
+        "name": "consumerGroups"
+      },
+      "properties": {},
+      "dependsOn": [
+        "eventHubs"
+      ]
+    },
+    {
+      "type": "Microsoft.EventHub/namespaces/eventhubs/authorizationRules",
+      "name": "[variables('eventHubs')[copyIndex()].authorizationRuleName]",
+      "apiVersion": "2017-04-01",
+      "copy": {
+        "count": "[length(variables('eventHubs'))]",
+        "mode": "Parallel",
+        "name": "authorizationRules"
+      },
+      "properties": {
+        "rights": [
+          "Listen",
+          "Send"
+        ]
+      },
+      "dependsOn": [
+        "consumerGroups"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2017-05-10",
+      "name": "outputGeneration",
+      "properties": {
+        "mode": "Incremental",
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+          },
+          "variables": {
+          },
+          "resources": [
+          ],
+          "outputs": {
+            "eventHubs": {
+              "type": "object",
+              "value": {
+                "[variables('eventHubNames')[0]]": "[listKeys(variables('eventHubs')[0].authorizationRuleResourceId, '2017-04-01').primaryConnectionString]",
+                "[variables('eventHubNames')[1]]": "[listKeys(variables('eventHubs')[1].authorizationRuleResourceId, '2017-04-01').primaryConnectionString]",
+                "[variables('eventHubNames')[2]]": "[listKeys(variables('eventHubs')[2].authorizationRuleResourceId, '2017-04-01').primaryConnectionString]"
+              }
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "authorizationRules"
+      ]
+    },
+    {
+      "type": "Microsoft.Databricks/workspaces",
+      "name": "[parameters('databricksWorkspaceName')]",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2018-04-01",
+      "sku": {
+        "name": "premium"
+      },
+      "properties": {
+        "managedResourceGroupId": "[concat(subscription().id, '/resourceGroups/', variables('dataBricksResourceGroup'))]"
+      }
+    },
+    {
+      "name": "[parameters('outputCosmosDatabaseAccount')]",
+      "type": "Microsoft.DocumentDB/databaseAccounts",
+      "apiVersion": "2015-04-08",
+      "location": "[resourceGroup().location]",
+      "kind": "GlobalDocumentDB",
+      "properties": {
+        "databaseAccountOfferType": "Standard"
+      }
+    }
+  ],
+  "outputs": {
+    "eventHubs": {
+      "type": "object",
+      "value": "[reference('outputGeneration').outputs.eventHubs.value]"
+    }
+  }
+}
