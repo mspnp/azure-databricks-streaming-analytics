@@ -8,37 +8,10 @@ import org.apache.spark.eventhubs.{EventHubsConf, EventPosition}
 import org.apache.spark.metrics.source.{AppAccumulators, AppMetrics}
 import org.apache.spark.sql.catalyst.expressions.{CsvToStructs, Expression}
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.streaming.{GroupState, OutputMode}
+import org.apache.spark.sql.streaming.OutputMode
 import org.apache.spark.sql.types.{StringType, StructType}
 import org.apache.spark.sql.{Column, SparkSession}
 import org.apache.spark.{SparkConf, SparkEnv}
-
-case class InputRow(
-                     medallion: Long,
-                     hackLicense: Long,
-                     vendorId: String,
-                     pickupTime: Timestamp,
-                     rateCode: Int,
-                     storeAndForwardFlag: String,
-                     dropoffTime: Timestamp,
-                     passengerCount: Int,
-                     tripTimeInSeconds: Double,
-                     tripDistanceInMiles: Double,
-                     pickupLon: Double,
-                     pickupLat: Double,
-                     dropoffLon: Double,
-                     dropoffLat: Double,
-                     paymentType: String,
-                     fareAmount: Double,
-                     surcharge: Double,
-                     mtaTax: Double,
-                     tipAmount: Double,
-                     tollsAmount: Double,
-                     totalAmount: Double,
-                     pickupNeighborhood: String,
-                     dropoffNeighborhood: String) extends Serializable
-
-case class NeighborhoodState(neighborhoodName: String, var avgFarePerRide: Double, var ridesCount: Double) extends Serializable
 
 object TaxiCabReader {
   private def withExpr(expr: Expression): Column = new Column(expr)
@@ -214,7 +187,6 @@ object TaxiCabReader {
     val mergedTaxiTrip = rides.join(fares, Seq("medallion", "hackLicense", "vendorId", "pickupTime"))
 
     val maxAvgFarePerNeighborhood = mergedTaxiTrip.selectExpr("medallion", "hackLicense", "vendorId", "pickupTime", "rateCode", "storeAndForwardFlag", "dropoffTime", "passengerCount", "tripTimeInSeconds", "tripDistanceInMiles", "pickupLon", "pickupLat", "dropoffLon", "dropoffLat", "paymentType", "fareAmount", "surcharge", "mtaTax", "tipAmount", "tollsAmount", "totalAmount", "pickupNeighborhood", "dropoffNeighborhood")
-      .as[InputRow]
       .groupBy(window($"pickupTime", conf.windowInterval()), $"pickupNeighborhood")
       .agg(
         count("*").as("rideCount"),
@@ -230,26 +202,5 @@ object TaxiCabReader {
       .foreach(new CassandraSinkForeach(connector, conf.cassandraKeySpace(), conf.cassandraTableName()))
       .start()
       .awaitTermination()
-  }
-
-
-  def updateNeighborhoodStateWithEvent(state: NeighborhoodState, input: InputRow): NeighborhoodState = {
-    state.avgFarePerRide = ((state.avgFarePerRide * state.ridesCount) + input.fareAmount) / (state.ridesCount + 1)
-    state.ridesCount += 1
-    state
-  }
-
-  def updateForEvents(neighborhoodName: String,
-                      inputs: Iterator[InputRow],
-                      oldState: GroupState[NeighborhoodState]): Iterator[NeighborhoodState] = {
-
-    var state: NeighborhoodState = if (oldState.exists) oldState.get else NeighborhoodState(neighborhoodName, 0, 0)
-
-    for (input <- inputs) {
-      state = updateNeighborhoodStateWithEvent(state, input)
-      oldState.update(state)
-    }
-
-    Iterator(state)
   }
 }

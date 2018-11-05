@@ -28,10 +28,10 @@ import java.util.Optional;
 public class GeoFinder implements Serializable {
     private static final Logger logger = LoggerFactory.getLogger(GeoFinder.class);
 
-    private FeatureSource featureSource;
-    private FilterFactory2 filterFactory;
-    private PropertyName propertyName;
-    private GeometryFactory geometryFactory;
+    private final FeatureSource featureSource;
+    private final FilterFactory2 filterFactory;
+    private final PropertyName propertyName;
+    private final GeometryFactory geometryFactory;
 
     private GeoFinder(FeatureSource featureSource, FilterFactory2 filterFactory, PropertyName propertyName) {
         this.featureSource = featureSource;
@@ -46,14 +46,11 @@ public class GeoFinder implements Serializable {
         Filter filter = this.filterFactory.contains(propertyName, filterFactory.literal(point));
         try {
             FeatureCollection featureCollection = this.featureSource.getFeatures(filter);
-            FeatureIterator iterator = featureCollection.features();
-            try {
+            try (FeatureIterator iterator = featureCollection.features()) {
                 if (iterator.hasNext()) {
                     Feature feature = iterator.next();
                     return Optional.of(feature.getProperty("Name").getValue().toString());
                 }
-            } finally {
-                iterator.close();
             }
         } catch (IOException ex) {
 
@@ -66,8 +63,6 @@ public class GeoFinder implements Serializable {
     public static GeoFinder createGeoFinder(URL shapeFileUrl) throws IOException {
         try {
             logger.info(String.format("Using shapefile: %s", shapeFileUrl));
-            Map<String, String> connect = new HashMap<>();
-            connect.put("url", shapeFileUrl.toString());
             ShapefileDataStore dataStore = new ShapefileDataStore(shapeFileUrl);
             String[] typeNames = dataStore.getTypeNames();
             String typeName = typeNames[0];

@@ -14,10 +14,10 @@ object Utils {
     metrics.put("id",  event.progress.id)
     metrics.put("sink", event.progress.sink)
     metrics.put("durationms", event.progress.durationMs.asInstanceOf[AnyRef])
-    metrics.put("inputRowsPerSecond",  event.progress.inputRowsPerSecond.asInstanceOf[AnyRef])
-    metrics.put("procRowsPerSecond",  event.progress.processedRowsPerSecond.asInstanceOf[AnyRef])
-    metrics.put("inputRows",  event.progress.numInputRows.asInstanceOf[AnyRef])
-    metrics.put("DateValue",date.toString())
+    metrics.put("inputRowsPerSecond", event.progress.inputRowsPerSecond.asInstanceOf[AnyRef])
+    metrics.put("procRowsPerSecond", event.progress.processedRowsPerSecond.asInstanceOf[AnyRef])
+    metrics.put("inputRows", event.progress.numInputRows.asInstanceOf[AnyRef])
+    metrics.put("DateValue", date.toString)
 
     metrics
   }
