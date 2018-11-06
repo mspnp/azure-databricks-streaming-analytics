@@ -1,7 +1,5 @@
 package com.microsoft.pnp
 
-import java.sql.Timestamp
-
 import com.datastax.spark.connector.cql.CassandraConnector
 import com.microsoft.pnp.log4j.LoggingConfiguration
 import org.apache.spark.eventhubs.{EventHubsConf, EventPosition}
@@ -121,10 +119,10 @@ object TaxiCabReader {
 
     val rides = transformedRides
       .filter(r => {
-        if(r.isNullAt(r.fieldIndex("errorMessage")) )  {
+        if (r.isNullAt(r.fieldIndex("errorMessage"))) {
           true
         }
-        else{
+        else {
           malformedRides.add(1)
           false
         }
@@ -170,10 +168,10 @@ object TaxiCabReader {
 
     val fares = transformedFares
       .filter(r => {
-        if(r.isNullAt(r.fieldIndex("errorMessage")) )  {
+        if (r.isNullAt(r.fieldIndex("errorMessage"))) {
           true
         }
-        else{
+        else {
           malformedFares.add(1)
           false
         }
@@ -186,7 +184,9 @@ object TaxiCabReader {
 
     val mergedTaxiTrip = rides.join(fares, Seq("medallion", "hackLicense", "vendorId", "pickupTime"))
 
+
     val maxAvgFarePerNeighborhood = mergedTaxiTrip.selectExpr("medallion", "hackLicense", "vendorId", "pickupTime", "rateCode", "storeAndForwardFlag", "dropoffTime", "passengerCount", "tripTimeInSeconds", "tripDistanceInMiles", "pickupLon", "pickupLat", "dropoffLon", "dropoffLat", "paymentType", "fareAmount", "surcharge", "mtaTax", "tipAmount", "tollsAmount", "totalAmount", "pickupNeighborhood", "dropoffNeighborhood")
+      .withWatermark("pickupTime", conf.windowInterval())
       .groupBy(window($"pickupTime", conf.windowInterval()), $"pickupNeighborhood")
       .agg(
         count("*").as("rideCount"),
@@ -199,7 +199,7 @@ object TaxiCabReader {
       .writeStream
       .queryName("maxAvgFarePerNeighborhood_cassandra_insert")
       .outputMode(OutputMode.Append())
-      .foreach(new CassandraSinkForeach(connector, conf.cassandraKeySpace(), conf.cassandraTableName()))
+      .foreach(new CassandraSinkForeach(connector))
       .start()
       .awaitTermination()
   }

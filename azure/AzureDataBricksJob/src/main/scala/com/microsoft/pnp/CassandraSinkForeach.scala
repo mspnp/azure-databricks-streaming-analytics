@@ -3,7 +3,7 @@ package com.microsoft.pnp
 import com.datastax.spark.connector.cql.CassandraConnector
 import org.apache.spark.sql.{ForeachWriter, Row}
 
-class CassandraSinkForeach(con: CassandraConnector, keySpace: String, tableName: String)
+class CassandraSinkForeach(con: CassandraConnector)
   extends ForeachWriter[Row] {
 
   // This class implements the interface ForeachWriter, which has methods that get called
@@ -14,14 +14,24 @@ class CassandraSinkForeach(con: CassandraConnector, keySpace: String, tableName:
 
   def process(record: Row) = {
     println(s"Process new $record")
-    con.withSessionDo(session =>
-      session.execute(
+    con.withSessionDo(session => {
+      val ps = session.prepare(
         s"""
-           |insert into $keySpace.$tableName (neighborhood,window_end,number_of_rides,total_fare_amount)
-           |       values('${record(2)}','${record(1)}',${record(3)},${record(4)})"""
+           |insert into newyorktaxi.neighborhoodstats (neighborhood,window_end,number_of_rides,total_fare_amount)
+           |       values( :n, :w, :r, :f)"""
 
       )
-    )
+
+      val bound = ps.bind()
+      bound
+        .setString("n", record.getString(2))
+        .setTimestamp("w", record.getTimestamp(1))
+        .setInt("r", record.getInt(3))
+        .setDouble("f", record.getDouble(4))
+
+      session.execute(bound)
+    })
+
   }
 
   def close(errorOrNull: Throwable): Unit = {
