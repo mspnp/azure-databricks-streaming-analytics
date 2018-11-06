@@ -16,7 +16,7 @@ class CassandraSinkForeach(con: CassandraConnector)
     con.withSessionDo(session => {
       val bound = session.prepare(
         s"""
-           |insert into sqltest1.taxirecords1 (neighborhood,window_end,number_of_rides,total_fare_amount)
+           |insert into newyorktaxi.neighborhoodstats (neighborhood,window_end,number_of_rides,total_fare_amount)
            |       values(?, ?, ?, ?)"""
 
       ).bind(
