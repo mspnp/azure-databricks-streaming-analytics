@@ -186,7 +186,6 @@ object TaxiCabReader {
 
 
     val maxAvgFarePerNeighborhood = mergedTaxiTrip.selectExpr("medallion", "hackLicense", "vendorId", "pickupTime", "rateCode", "storeAndForwardFlag", "dropoffTime", "passengerCount", "tripTimeInSeconds", "tripDistanceInMiles", "pickupLon", "pickupLat", "dropoffLon", "dropoffLat", "paymentType", "fareAmount", "surcharge", "mtaTax", "tipAmount", "tollsAmount", "totalAmount", "pickupNeighborhood", "dropoffNeighborhood")
-      .withWatermark("pickupTime", conf.windowInterval())
       .groupBy(window($"pickupTime", conf.windowInterval()), $"pickupNeighborhood")
       .agg(
         count("*").as("rideCount"),

@@ -13,21 +13,18 @@ class CassandraSinkForeach(con: CassandraConnector)
   }
 
   def process(record: Row) = {
-    println(s"Process new $record")
     con.withSessionDo(session => {
-      val ps = session.prepare(
+      val bound = session.prepare(
         s"""
-           |insert into newyorktaxi.neighborhoodstats (neighborhood,window_end,number_of_rides,total_fare_amount)
-           |       values( :n, :w, :r, :f)"""
+           |insert into sqltest1.taxirecords1 (neighborhood,window_end,number_of_rides,total_fare_amount)
+           |       values(?, ?, ?, ?)"""
 
+      ).bind(
+        record.getString(2),
+        record.getTimestamp(1),
+        record.getLong(3).asInstanceOf[AnyRef],
+        record.getDouble(4).asInstanceOf[AnyRef]
       )
-
-      val bound = ps.bind()
-      bound
-        .setString("n", record.getString(2))
-        .setTimestamp("w", record.getTimestamp(1))
-        .setLong("r", record.getLong(3))
-        .setDouble("f", record.getDouble(4))
 
       session.execute(bound)
     })
