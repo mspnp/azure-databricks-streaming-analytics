@@ -5,18 +5,23 @@
     "eventHubNamespace": {
       "type": "string"
     },
-    "databricksWorkspaceName" :{
+    "databricksWorkspaceName": {
       "type":"string"
     },
-    "outputCosmosDatabaseAccount": {
+    "cosmosDatabaseAccount": {
+      "type": "string"
+    },
+    "logAnalyticsWorkspaceName": {
+      "type": "string"
+    },
+    "logAnalyticsWorkspaceRegion": {
       "type": "string"
     }
   },
   "variables": {
     "eventHubNames": [
       "taxi-ride-eh",
-      "taxi-fare-eh",
-      "taxi-invalid-eh"
+      "taxi-fare-eh"
     ],
     "copy": [
         {
@@ -33,6 +38,18 @@
     "dataBricksResourceGroup": "[concat(resourceGroup().name, '-', parameters('databricksWorkspaceName'), '-', uniqueString(resourceGroup().name, '-', parameters('databricksWorkspaceName')))]"
   },
   "resources": [
+    {
+      "type": "Microsoft.Operationalinsights/workspaces",
+      "name": "[parameters('logAnalyticsWorkspaceName')]",
+      "apiVersion": "2015-11-01-preview",
+      "location": "[parameters('logAnalyticsWorkspaceRegion')]",
+      "properties": {
+          "sku": {
+              "name": "Free"
+          },
+          "retentionInDays": 7
+      }
+    },
     {
       "type": "Microsoft.EventHub/namespaces",
       "name": "[parameters('eventHubNamespace')]",
@@ -94,6 +111,42 @@
       ]
     },
     {
+      "type": "Microsoft.Databricks/workspaces",
+      "name": "[parameters('databricksWorkspaceName')]",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2018-04-01",
+      "sku": {
+        "name": "premium"
+      },
+      "properties": {
+        "managedResourceGroupId": "[concat(subscription().id, '/resourceGroups/', variables('dataBricksResourceGroup'))]"
+      }
+    },
+    {
+      "name": "[parameters('cosmosDatabaseAccount')]",
+      "type": "Microsoft.DocumentDB/databaseAccounts",
+      "apiVersion": "2015-04-08",
+      "location": "[resourceGroup().location]",
+      "kind": "GlobalDocumentDB",
+      "tags": {
+        "defaultExperience": "Cassandra"
+      },
+      "properties": {
+        "databaseAccountOfferType": "Standard",
+        "locations": [
+          {
+            "locationName": "[resourceGroup().location]",
+            "failoverPriority": 0
+          }
+        ],
+        "capabilities": [
+          {
+              "name": "EnableCassandra"
+          }
+        ]
+      }
+    },
+    {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2017-05-10",
       "name": "outputGeneration",
@@ -109,45 +162,47 @@
           "resources": [
           ],
           "outputs": {
+            "cosmosDb": {
+              "type": "object",
+              "value": {
+                "username": "[substring(reference(parameters('cosmosDatabaseAccount')).cassandraEndpoint, 8, sub(indexOf(reference(parameters('cosmosDatabaseAccount')).cassandraEndpoint, '.'), 8))]",
+                "hostName": "[substring(reference(parameters('cosmosDatabaseAccount')).cassandraEndpoint, 8, sub(length(reference(parameters('cosmosDatabaseAccount')).cassandraEndpoint), 13))]",
+                "secret": "[listKeys(parameters('cosmosDatabaseAccount'), '2015-04-08').primaryMasterKey]"
+              }
+            },
             "eventHubs": {
               "type": "object",
               "value": {
                 "[variables('eventHubNames')[0]]": "[listKeys(variables('eventHubs')[0].authorizationRuleResourceId, '2017-04-01').primaryConnectionString]",
-                "[variables('eventHubNames')[1]]": "[listKeys(variables('eventHubs')[1].authorizationRuleResourceId, '2017-04-01').primaryConnectionString]",
-                "[variables('eventHubNames')[2]]": "[listKeys(variables('eventHubs')[2].authorizationRuleResourceId, '2017-04-01').primaryConnectionString]"
+                "[variables('eventHubNames')[1]]": "[listKeys(variables('eventHubs')[1].authorizationRuleResourceId, '2017-04-01').primaryConnectionString]"
+              }
+            },
+            "logAnalytics": {
+              "type": "object",
+              "value": {
+                "workspaceId": "[reference(parameters('logAnalyticsWorkspaceName')).customerId]",
+                "secret": "[listKeys(parameters('logAnalyticsWorkspaceName'), '2015-11-01-preview').primarySharedKey]"
               }
             }
           }
         }
       },
       "dependsOn": [
-        "authorizationRules"
+        "authorizationRules",
+        "[parameters('cosmosDatabaseAccount')]",
+        "[parameters('databricksWorkspaceName')]"
       ]
-    },
-    {
-      "type": "Microsoft.Databricks/workspaces",
-      "name": "[parameters('databricksWorkspaceName')]",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2018-04-01",
-      "sku": {
-        "name": "premium"
-      },
-      "properties": {
-        "managedResourceGroupId": "[concat(subscription().id, '/resourceGroups/', variables('dataBricksResourceGroup'))]"
-      }
-    },
-    {
-      "name": "[parameters('outputCosmosDatabaseAccount')]",
-      "type": "Microsoft.DocumentDB/databaseAccounts",
-      "apiVersion": "2015-04-08",
-      "location": "[resourceGroup().location]",
-      "kind": "GlobalDocumentDB",
-      "properties": {
-        "databaseAccountOfferType": "Standard"
-      }
     }
   ],
   "outputs": {
+    "cosmosDb": {
+      "type": "object",
+      "value": "[reference('outputGeneration').outputs.cosmosDb.value]"
+    },
+    "logAnalytics": {
+      "type": "object",
+      "value": "[reference('outputGeneration').outputs.logAnalytics.value]"
+    },
     "eventHubs": {
       "type": "object",
       "value": "[reference('outputGeneration').outputs.eventHubs.value]"
