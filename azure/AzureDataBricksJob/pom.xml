@@ -29,13 +29,13 @@
         <dependency>
             <groupId>com.microsoft.azure</groupId>
             <artifactId>azure-eventhubs-spark_2.11</artifactId>
-            <version>2.3.5</version>
+            <version>2.3.15</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.geotools</groupId>
             <artifactId>gt-shapefile</artifactId>
-            <version>19.2</version>
+            <version>23.0</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -61,15 +61,21 @@
             <version>2.3.2</version>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>com.vividsolutions</groupId>
+            <artifactId>jts</artifactId>
+            <version>1.13</version>
+        </dependency>
     </dependencies>
     <repositories>
         <repository>
-            <id>osgeo</id>
-            <name>Open Source Geospatial Foundation Repository</name>
-            <url>http://download.osgeo.org/webdav/geotools/</url>
+        <id>osgeo</id>
+        <name>OSGeo Release Repository</name>
+        <url>https://repo.osgeo.org/repository/release/</url>
+        <snapshots><enabled>false</enabled></snapshots>
+        <releases><enabled>true</enabled></releases>
         </repository>
     </repositories>
-
     <build>
         <testResources>
             <testResource>

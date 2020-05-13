@@ -16,15 +16,11 @@ A deployment for this reference architecture is available on [GitHub](https://gi
 
 2. Install [Docker](https://www.docker.com/) to run the data generator.
 
-3. Install [Azure CLI 2.0](/cli/azure/install-azure-cli?view=azure-cli-latest).
+3. Install [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest).
 
 4. Install [Databricks CLI](https://docs.databricks.com/user-guide/dev-tools/databricks-cli.html).
 
-5. From a command prompt, bash prompt, or PowerShell prompt, sign into your Azure account as follows:
-    ```shell
-    az login
-    ```
-6. Install a Java IDE, with the following resources:
+5. Install a Java IDE, with the following resources:
     - JDK 1.8
     - Scala SDK 2.11
     - Maven 3.5.4
@@ -52,12 +48,6 @@ A deployment for this reference architecture is available on [GitHub](https://gi
             trip_data_3.zip
             ...
     ```
-
-5. Open a web browser and navigate to https://www.zillow.com/howto/api/neighborhood-boundaries.htm. 
-
-6. Click on **New York Neighborhood Boundaries** to download the file.
-
-7. Copy the **ZillowNeighborhoods-NY.zip** file from your browser's **downloads** directory to the `DataFile` directory.
 
 ### Deploy the Azure resources
 
@@ -88,7 +78,7 @@ A deployment for this reference architecture is available on [GitHub](https://gi
     az group create --name $resourceGroup --location $resourceLocation
 
     # Deploy resources
-    az group deployment create --resource-group $resourceGroup \
+    az deployment group create --resource-group $resourceGroup \
 	    --template-file deployresources.json --parameters \
 	    eventHubNamespace=$eventHubNamespace \
         databricksWorkspaceName=$databricksWorkspaceName \
@@ -125,11 +115,11 @@ A deployment for this reference architecture is available on [GitHub](https://gi
         }
 },
 ```
-These values are the secrets that will be added to Databricks secrets in upcoming sections. Keep them secure until you add them in those sections.
+These values are the secrets that will be added to `Databricks secrets` in upcoming sections. Keep them secure until you add them in those sections.
 
 ### Add a Cassandra table to the Cosmos DB Account
 
-1. In the Azure portal, navigate to the resource group created in the **deploy the Azure resources** section above. Click on **Azure Cosmos DB Account**. Create a table with the Cassandra API.
+1. In the Azure portal, navigate to the resource group created in the **deploy the Azure resources** section above. Click on **Azure Cosmos DB Account**. Create a table with the `Cassandra API`.
 
 2. In the **overview** blade, click **add table**.
 
@@ -137,7 +127,7 @@ These values are the secrets that will be added to Databricks secrets in upcomin
 
 4. In the **enter CQL command to create the table** section, enter `neighborhoodstats` in the text box beside `newyorktaxi`.
 
-5. In the text box below, enter the following::
+5. In the text box below, enter the following:
 ```shell
 (neighborhood text, window_end timestamp, number_of_rides bigint,total_fare_amount double, primary key(neighborhood, window_end))
 ```
@@ -147,19 +137,20 @@ These values are the secrets that will be added to Databricks secrets in upcomin
 
 ### Add the Databricks secrets using the Databricks CLI
 
+Using the **Azure Databricks CLI** installed in step 2 of the prerequisites, create the Azure Databricks secret scope:
+
+```
+databricks secrets create-scope --scope "azure-databricks-job"
+```
 First, enter the secrets for EventHub:
 
-1. Using the **Azure Databricks CLI** installed in step 2 of the prerequisites, create the Azure Databricks secret scope:
-    ```shell
-    databricks secrets create-scope --scope "azure-databricks-job"
-    ```
-2. Add the secret for the taxi ride EventHub:
+1. Add the secret for the taxi ride EventHub:
     ```shell
     databricks secrets put --scope "azure-databricks-job" --key "taxi-ride"
     ```
     Once executed, this command opens the vi editor. Enter the **taxi-ride-eh** value from the **eventHubs** output section in step 4 of the *deploy the Azure resources* section. Save and exit vi.
 
-3. Add the secret for the taxi fare EventHub:
+2. Add the secret for the taxi fare EventHub:
     ```shell
     databricks secrets put --scope "azure-databricks-job" --key "taxi-fare"
     ```
@@ -233,7 +224,7 @@ For this section, you require the Log Analytics workspace ID and primary key. Th
 
 3. While you haven't yet decided on a name for your Databricks cluster, select one now. You'll enter the name below in the Databricks file system path for your cluster. Copy the initialization script from `\azure\azure-databricks-monitoring\scripts\spark.metrics` to the Databricks file system by entering the following command:
     ```
-    databricks fs cp --overwrite spark-metrics.sh dbfs:/databricks/init/<cluster-name>/spark-metrics.sh
+    databricks fs cp --overwrite spark-metrics.sh dbfs:/databricks/init/spark-metrics.sh
     ```
 
 ### Create a Databricks cluster
@@ -242,9 +233,9 @@ For this section, you require the Log Analytics workspace ID and primary key. Th
 
 2. Select a **standard** cluster mode.
 
-3. Set **Databricks runtime version** to **4.3 (includes Apache Spark 2.3.1, Scala 2.11)**
+3. Set **Databricks runtime version** to **6.4 (includes Apache Spark 2.4.5 Scala 2.11)**
 
-4. Set **Python version** to **2**.
+4. Set **Python version** to **3**.
 
 5. Set **Driver Type** to **Same as worker**
 
@@ -254,9 +245,9 @@ For this section, you require the Log Analytics workspace ID and primary key. Th
 
 8. Deselect **Enable autoscaling**. 
 
-9. Below the **Auto Termination** dialog box, click on **Init Scripts**. 
+9. Expand **Advanced Options** and choose the tab **Init Scripts**. 
 
-10. Enter **dbfs:/databricks/init/<cluster-name>/spark-metrics.sh**, substituting the cluster name created in step 1 for <cluster-name>.
+10. Enter **dbfs:/databricks/init/spark-metrics.sh**.
 
 11. Click the **Add** button.
 
@@ -278,7 +269,6 @@ For this section, you require the Log Analytics workspace ID and primary key. Th
     ```shell
     -n jar:file:/dbfs/azure-databricks-jobs/ZillowNeighborhoods-NY.zip!/ZillowNeighborhoods-NY.shp --taxi-ride-consumer-group taxi-ride-eh-cg --taxi-fare-consumer-group taxi-fare-eh-cg --window-interval "1 minute" --cassandra-host <Cosmos DB Cassandra host name from above> 
     ``` 
-
 7. Install the dependent libraries by following these steps:
     
     1. In the Databricks user interface, click on the **home** button.
@@ -287,25 +277,27 @@ For this section, you require the Log Analytics workspace ID and primary key. Th
     
     3. Click on the drop-down arrow beside your account name, click on **create**, and click on **Library** to open the **New Library** dialog.
     
-    4. In the **Source** drop-down control, select **Maven Coordinate**.
+    4. Under the **Library Source**, select **Maven**.
     
-    5. Under the **Install Maven Artifacts** heading, enter `com.microsoft.azure:azure-eventhubs-spark_2.11:2.3.5` in the **Coordinate** text box. 
+    5. Under the **Coordinates** heading, enter `com.microsoft.azure:azure-eventhubs-spark_2.11:2.3.5` in the text box. 
     
-    6. Click on **Create Library** to open the **Artifacts** window.
+    6. Click on **Create** to open the **Artifacts** window.
     
     7. Under **Status on running clusters** check the **Attach automatically to all clusters** checkbox.
     
     8. Repeat steps 1 - 7 for the `com.microsoft.azure.cosmosdb:azure-cosmos-cassandra-spark-helper:1.0.0` Maven coordinate.
     
-    9. Repeat steps 1 - 6 for the `org.geotools:gt-shapefile:19.2` Maven coordinate.
+    9. Repeat steps 1 - 7 for the `com.datastax.spark:spark-cassandra-connector_2.11:2.3.2` Maven coordinate.
     
-    10. Click on **Advanced Options**.
+    10. Repeat steps 1 - 6 for the `org.geotools:gt-shapefile:23.0` Maven coordinate.
     
-    11. Enter `http://download.osgeo.org/webdav/geotools/` in the **Repository** text box. 
+    11. Click on **Advanced Options**.
     
-    12. Click **Create Library** to open the **Artifacts** window. 
+    12. Enter `https://repo.osgeo.org/repository/release/` in the **Repository** text box. 
     
-    13. Under **Status on running clusters** check the **Attach automatically to all clusters** checkbox.
+    13. Click **Create** to open the **Artifacts** window. 
+    
+    14. Under **Status on running clusters** check the **Attach automatically to all clusters** checkbox.
 
 8. Add the dependent libraries added in step 7 to the job created at the end of step 6:
     1. In the Azure Databricks workspace, click on **Jobs**.
@@ -316,11 +308,11 @@ For this section, you require the Log Analytics workspace ID and primary key. Th
     
     4. Under **Library From** select **Workspace**.
     
-    5. Click on **users**, then your username, then click on `azure-eventhubs-spark_2.11:2.3.5`. 
+    5. Click on **users**, then your username, then click on `azure-eventhubs-spark_2.11:2.3.15`. 
     
     6. Click **OK**.
     
-    7. Repeat steps 1 - 6 for `spark-cassandra-connector_2.11:2.3.1` and `gt-shapefile:19.2`.
+    7. Repeat steps 1 - 6 for `spark-cassandra-connector_2.11:2.3.2`, `gt-shapefile:23.0` and `azure-cosmos-cassandra-spark-helper:1.0.0`.
 
 9. Beside **Cluster:**, click on **Edit**. This opens the **Configure Cluster** dialog. In the **Cluster Type** drop-down, select **Existing Cluster**. In the **Select Cluster** drop-down, select the cluster created the **create a Databricks cluster** section. Click **confirm**.
 

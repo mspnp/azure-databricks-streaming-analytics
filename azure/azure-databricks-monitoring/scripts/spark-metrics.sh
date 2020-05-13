@@ -1,5 +1,4 @@
 #!/bin/bash
-
 METRICS_DIR=/dbfs/azure-databricks-job
 SPARK_CONF_DIR=/databricks/spark/conf
 METRICS_PROPS=${SPARK_CONF_DIR}/metrics.properties
