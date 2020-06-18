@@ -7,13 +7,16 @@ import org.geotools.data.FeatureSource;
 import org.geotools.data.collection.SpatialIndexFeatureCollection;
 import org.geotools.data.collection.SpatialIndexFeatureSource;
 import org.geotools.data.shapefile.ShapefileDataStore;
+import org.geotools.data.store.ReprojectingFeatureCollection;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.FeatureIterator;
+import org.geotools.referencing.CRS;
 import org.opengis.feature.Feature;
 import org.opengis.filter.Filter;
 import org.opengis.filter.FilterFactory2;
 import org.opengis.filter.expression.PropertyName;
+import org.opengis.referencing.FactoryException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.Serializable;
@@ -68,8 +71,13 @@ public class GeoFinder implements Serializable {
             String typeName = typeNames[0];
 
             logger.info(String.format("Reading content %s", typeName));
+            ReprojectingFeatureCollection features = new ReprojectingFeatureCollection(
+                    dataStore.getFeatureSource(typeName).getFeatures(),
+                    CRS.decode("epsg:4269"),
+                    CRS.decode("epsg:4326")
+            );
             FeatureSource featureSource = new SpatialIndexFeatureSource(
-                    new SpatialIndexFeatureCollection(dataStore.getFeatureSource(typeName).getFeatures()));
+                    new SpatialIndexFeatureCollection(features));
 
             FilterFactory2 filterFactory = CommonFactoryFinder.getFilterFactory2();
             PropertyName propertyName = filterFactory.property(dataStore
@@ -77,9 +85,12 @@ public class GeoFinder implements Serializable {
                     .getGeometryDescriptor()
                     .getName());
             return new GeoFinder(featureSource, filterFactory, propertyName);
-        } catch (IOException ex) {
-            logger.error(String.format("Error loading Geospatial data from %s", shapeFileUrl));
-            throw ex;
+        } catch (IOException ioe) {
+            logger.error(String.format("Error loading Geospatial data from %s", shapeFileUrl), ioe);
+            throw ioe;
+        } catch (FactoryException fe) {
+            logger.error(String.format("Error loading Geographic Coordinate System"), fe);
+            throw new IOException(fe);
         }
     }
 }
