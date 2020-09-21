@@ -41,7 +41,7 @@
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-server</artifactId>
-            <version>9.4.17.v20190418</version>
+            <version>9.4.31.v20200723</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -69,13 +69,12 @@
     </dependencies>
     <repositories>
         <repository>
-        <id>osgeo</id>
-        <name>OSGeo Release Repository</name>
-        <url>https://repo.osgeo.org/repository/release/</url>
-        <snapshots><enabled>false</enabled></snapshots>
-        <releases><enabled>true</enabled></releases>
+            <id>osgeo</id>
+            <name>Open Source Geospatial Foundation Repository</name>
+            <url>https://repo.osgeo.org/repository/release/</url>
         </repository>
     </repositories>
+
     <build>
         <testResources>
             <testResource>
@@ -89,12 +88,6 @@
             <plugin>
                 <groupId>org.scalatest</groupId>
                 <artifactId>scalatest-maven-plugin</artifactId>
-                <configuration>
-                    <!--<debugForkedProcess>true</debugForkedProcess>-->
-                    <!--<environmentVariables>-->
-                        <!--<NEIGHBORHOOD_FILE_PATH>jar:file:/C:/Source/mspnp/reference-architectures/data/streaming_azuredatabricks/azure/AzureDataBricksJob/ZillowNeighborhoods-NY.zip!/ZillowNeighborhoods-NY.shp</NEIGHBORHOOD_FILE_PATH>-->
-                    <!--</environmentVariables>-->
-                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
