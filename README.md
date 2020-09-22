@@ -1,6 +1,6 @@
 # Stream processing with Azure Databricks
 
-This reference architecture shows an end-to-end [stream processing](/azure/architecture/data-guide/big-data/real-time-processing) pipeline. This type of pipeline has four stages: ingest, process, store, and analysis and reporting. For this reference architecture, the pipeline ingests data from two sources, performs a join on related records from each stream, enriches the result, and calculates an average in real time. The results are stored for further analysis. 
+This reference architecture shows an end-to-end [stream processing](https://docs.microsoft.com/azure/architecture/data-guide/big-data/real-time-processing) pipeline. This type of pipeline has four stages: ingest, process, store, and analysis and reporting. For this reference architecture, the pipeline ingests data from two sources, performs a join on related records from each stream, enriches the result, and calculates an average in real time. The results are stored for further analysis. 
 
 ![](https://github.com/mspnp/architecture-center/blob/master/docs/reference-architectures/data/images/stream-processing-databricks.png)
 
@@ -16,7 +16,7 @@ A deployment for this reference architecture is available on [GitHub](https://gi
 
 2. Install [Docker](https://www.docker.com/) to run the data generator.
 
-3. Install [Azure CLI 2.0](/cli/azure/install-azure-cli?view=azure-cli-latest).
+3. Install [Azure CLI 2.0](https://docs.microsoft.com/cli/azure/install-azure-cli?view=azure-cli-latest).
 
 4. Install [Databricks CLI](https://docs.databricks.com/user-guide/dev-tools/databricks-cli.html).
 
@@ -247,9 +247,9 @@ For this section, you require the Log Analytics workspace ID and primary key. Th
 
 2. Select a **standard** cluster mode.
 
-3. Set **Databricks runtime version** to **5.5 LTS (includes Apache Spark 2.4.3, Scala 2.11)**
+3. Set **Databricks runtime version** to **6.6 (includes Apache Spark 2.4.5, Scala 2.11)**
 
-4. Set **Python version** to **2**.
+4. Set **Python version** to **3**.
 
 5. Set **Driver Type** to **Same as worker**
 

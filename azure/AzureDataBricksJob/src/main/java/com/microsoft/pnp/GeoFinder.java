@@ -78,7 +78,7 @@ public class GeoFinder implements Serializable {
                     .getName());
             return new GeoFinder(featureSource, filterFactory, propertyName);
         } catch (IOException ex) {
-            logger.error(String.format("Error loading Geospatial data from %s", shapeFileUrl));
+            logger.error(String.format("Error loading Geospatial data from %s", shapeFileUrl), ex);
             throw ex;
         }
     }
