@@ -16,14 +16,17 @@ class CassandraSinkForeach(con: CassandraConnector)
     con.withSessionDo(session => {
       val bound = session.prepare(
         s"""
-           |insert into newyorktaxi.neighborhoodstats (neighborhood,window_end,number_of_rides,total_fare_amount)
-           |       values(?, ?, ?, ?)"""
+           |insert into newyorktaxi.neighborhoodstats (neighborhood,window_end,number_of_rides,total_fare_amount,total_tip_amount,average_fare_amount,average_tip_amount)
+           |       values(?, ?, ?, ?, ?, ?, ?)"""
 
       ).bind(
         record.getString(2),
         record.getTimestamp(1),
         record.getLong(3).asInstanceOf[AnyRef],
-        record.getDouble(4).asInstanceOf[AnyRef]
+        record.getDouble(4).asInstanceOf[AnyRef],
+        record.getDouble(5).asInstanceOf[AnyRef],
+        record.getDouble(6).asInstanceOf[AnyRef],
+        record.getDouble(7).asInstanceOf[AnyRef]
       )
 
       session.execute(bound)
