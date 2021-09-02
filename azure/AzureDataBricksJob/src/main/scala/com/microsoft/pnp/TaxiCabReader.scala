@@ -190,9 +190,11 @@ object TaxiCabReader {
       .agg(
         count("*").as("rideCount"),
         sum($"fareAmount").as("totalFareAmount"),
-        sum($"tipAmount").as("totalTipAmount")
+        sum($"tipAmount").as("totalTipAmount"),
+        (sum($"fareAmount")/count("*")).as("averageFareAmount"),
+        (sum($"tipAmount")/count("*")).as("averageTipAmount")
       )
-      .select($"window.start", $"window.end", $"pickupNeighborhood", $"rideCount", $"totalFareAmount", $"totalTipAmount")
+      .select($"window.start", $"window.end", $"pickupNeighborhood", $"rideCount", $"totalFareAmount", $"totalTipAmount", $"averageFareAmount", $"averageTipAmount")
 
     maxAvgFarePerNeighborhood
       .writeStream

@@ -1,8 +1,8 @@
 package com.microsoft.pnp;
 
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.GeometryFactory;
-import com.vividsolutions.jts.geom.Point;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.Point;
 import org.geotools.data.FeatureSource;
 import org.geotools.data.collection.SpatialIndexFeatureCollection;
 import org.geotools.data.collection.SpatialIndexFeatureSource;
@@ -20,8 +20,6 @@ import scala.Serializable;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 
 
