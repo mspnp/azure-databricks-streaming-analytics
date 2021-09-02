@@ -211,13 +211,13 @@ Next, enter the secrets for Cosmos DB:
 1. Create a directory in the Databricks file system:
 
     ```bash
-    dbfs mkdirs dbfs:/azure-databricks-jobs
+    dbfs mkdirs dbfs:/azure-databricks-job
     ```
 
 2. Navigate to the DataFile folder and enter the following:
 
     ```bash
-    dbfs cp cb_2020_36_cousub_500k.zip dbfs:/azure-databricks-jobs/
+    dbfs cp cb_2020_36_cousub_500k.zip dbfs:/azure-databricks-job/
     ```
 
     > Note: The filename may change if you obtain a shapefile for a different year.
@@ -257,13 +257,13 @@ For this section, you require the Log Analytics workspace ID and primary key. Th
 1. Copy the **azure-databricks-monitoring-0.9.jar** file to the Databricks file system by entering the following command in the **Databricks CLI**:
 
     ```bash
-    databricks fs cp --overwrite azure-databricks-monitoring/target/azure-databricks-monitoring-0.9.jar dbfs:/azure-databricks-jobs/
+    databricks fs cp --overwrite azure-databricks-monitoring/target/azure-databricks-monitoring-0.9.jar dbfs:/azure-databricks-job/
     ```
 
 2. Copy the custom logging properties from \azure\azure-databricks-monitoring\scripts\metrics.properties to the Databricks file system by entering the following command:
 
     ```bash
-    databricks fs cp --overwrite azure-databricks-monitoring/scripts/metrics.properties dbfs:/azure-databricks-jobs/
+    databricks fs cp --overwrite azure-databricks-monitoring/scripts/metrics.properties dbfs:/azure-databricks-job/
     ```
 
 3. While you haven't yet decided on a name for your Databricks cluster, select one now. You'll enter the name below in the Databricks file system path for your cluster. Copy the initialization script from azure\azure-databricks-monitoring\scripts\spark.metrics to the Databricks file system by entering the following command:
@@ -325,7 +325,7 @@ For this section, you require the Log Analytics workspace ID and primary key. Th
 1. Copy the **azure-databricks-job-1.0-SNAPSHOT.jar** file to the Databricks file system by entering the following command in the **Databricks CLI**:
 
     ```bash
-    databricks fs cp --overwrite AzureDataBricksJob/target/azure-databricks-job-1.0-SNAPSHOT.jar dbfs:/azure-databricks-jobs/
+    databricks fs cp --overwrite AzureDataBricksJob/target/azure-databricks-job-1.0-SNAPSHOT.jar dbfs:/azure-databricks-job/
     ```
 
 1. In the Databricks workspace, click "Jobs", "create job".
@@ -336,16 +336,16 @@ For this section, you require the Log Analytics workspace ID and primary key. Th
 
 1. Under **Dependent Libraries** click **Add**, this opens the **Add dependent library** dialog box.
 
-1. Change **Library Source** to **DBFS/ADLS**, confirm that Library Type is **Jar** and enter `dbfs:/azure-databricks-jobs/azure-databricks-job-1.0-SNAPSHOT.jar` in the **File Path** text box and select **Add**.
+1. Change **Library Source** to **DBFS/ADLS**, confirm that Library Type is **Jar** and enter `dbfs:/azure-databricks-job/azure-databricks-job-1.0-SNAPSHOT.jar` in the **File Path** text box and select **Add**.
 
 1. Under **Dependent Libraries** click **Add** again.
 
-1. Change **Library Source** to **DBFS/ADLS**, confirm that Library Type is **Jar** and enter `dbfs:/azure-databricks-jobs/azure-databricks-monitoring-0.9.jar` in the **File Path** text box and select **Add**.
+1. Change **Library Source** to **DBFS/ADLS**, confirm that Library Type is **Jar** and enter `dbfs:/azure-databricks-job/azure-databricks-monitoring-0.9.jar` in the **File Path** text box and select **Add**.
 
 1. In the **Parameters** field, enter the following (replace **\<Cosmos DB Cassandra host name\>** with a value from above):
 
     ```shell
-    ["-n","jar:file:/dbfs/azure-databricks-jobs/cb_2020_36_cousub_500k.zip!/cb_2020_36_cousub_500k.shp","--taxi-ride-consumer-group","taxi-ride-eh-cg","--taxi-fare-consumer-group","taxi-fare-eh-cg","--window-interval","1 minute","--cassandra-host","<Cosmos DB Cassandra host name>"]
+    ["-n","jar:file:/dbfs/azure-databricks-job/cb_2020_36_cousub_500k.zip!/cb_2020_36_cousub_500k.shp","--taxi-ride-consumer-group","taxi-ride-eh-cg","--taxi-fare-consumer-group","taxi-fare-eh-cg","--window-interval","1 minute","--cassandra-host","<Cosmos DB Cassandra host name>"]
     ```
 
 1. Under **Cluster**, click the drop down arrow and select the cluster created the **Create a Databricks cluster** section.
