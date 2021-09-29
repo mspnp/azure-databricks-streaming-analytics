@@ -28,7 +28,7 @@ A deployment for this reference architecture is available on [GitHub](https://gi
 
 6. Optional - Install a Java IDE, with the following resources:
     - JDK 1.8
-    - Scala SDK 2.11
+    - Scala SDK 2.12
     - Maven 3.6.3
     > Note: Instructions are included for building via a docker container if you do not want to install a Java IDE.
 
@@ -146,7 +146,7 @@ These values are the secrets that will be added to Databricks secrets in upcomin
     (neighborhood text, window_end timestamp, number_of_rides bigint, total_fare_amount double, total_tip_amount double, average_fare_amount double, average_tip_amount double, primary key(neighborhood, window_end))
     ```
 
-6. In the **Tabel throughput** section confirm that `Autoscale` is selected and that value `4000` is in the **Table Max RU/s** text box.
+6. In the **Table throughput** section confirm that `Autoscale` is selected and that value `4000` is in the **Table Max RU/s** text box.
 
 7. Click **OK**.
 
@@ -156,7 +156,7 @@ These values are the secrets that will be added to Databricks secrets in upcomin
 >
 > ```bash
 > export DATABRICKS_AAD_TOKEN=$(az account get-access-token --resource 2ff814a6-3304-4ab8-85cb-cd0e6f879c1d | jq .accessToken --raw-output)
-> databricks configure --aad-token --host <enter cosmosDb.hostName value from step 4 output above>
+> databricks configure --aad-token --host <enter Databricks Workspace URL from Portal>
 > ```
 >
 > The resource GUID (2ff814a6-3304-4ab8-85cb-cd0e6f879c1d) is a fixed value. For other options see [Set up authentication](https://docs.microsoft.com/azure/databricks/dev-tools/cli/#--set-up-authentication) in the Azure Databricks documentation.
@@ -222,25 +222,7 @@ Next, enter the secrets for Cosmos DB:
 
     > Note: The filename may change if you obtain a shapefile for a different year.
 
-### Add the Azure Log Analytics workspace ID and primary key to configuration files
-
-For this section, you require the Log Analytics workspace ID and primary key. The workspace ID is the **workspaceId** value from the **logAnalytics** output section in step 4 of the *deploy the Azure resources* section. The primary key is the **secret** from the output section.
-
-1. To configure log4j logging, open azure\AzureDataBricksJob\src\main\resources\com\microsoft\pnp\azuredatabricksjob\log4j.properties. Edit the following two values:
-
-    ```shell
-    log4j.appender.A1.workspaceId=<Log Analytics workspace ID>
-    log4j.appender.A1.secret=<Log Analytics primary key>
-    ```
-
-2. To configure custom logging, open azure\azure-databricks-monitoring\scripts\metrics.properties. Edit the following two values:
-
-    ```shell
-    *.sink.loganalytics.workspaceId=<Log Analytics workspace ID>
-    *.sink.loganalytics.secret=<Log Analytics primary key>
-    ```
-
-### Build the .jar files for the Databricks job and Databricks monitoring
+### Build the .jar files for the Databricks job
 
 1. To build the jars using a docker container from a bash prompt change to the **azure** directory and run:
 
@@ -250,27 +232,7 @@ For this section, you require the Log Analytics workspace ID and primary key. Th
 
     > Note: Alternately, use your Java IDE to import the Maven project file named **pom.xml** located in the **azure** directory. Perform a clean build.
 
-1. The outputs of the build are files named **azure-databricks-monitoring-0.9.jar** in the **./azure-databricks-monitoring/target** directory and **azure-databricks-job-1.0-SNAPSHOT.jar** in the **./AzureDataBricksJob/target** directory.
-
-### Configure custom logging for the Databricks job
-
-1. Copy the **azure-databricks-monitoring-0.9.jar** file to the Databricks file system by entering the following command in the **Databricks CLI**:
-
-    ```bash
-    databricks fs cp --overwrite azure-databricks-monitoring/target/azure-databricks-monitoring-0.9.jar dbfs:/azure-databricks-job/
-    ```
-
-2. Copy the custom logging properties from \azure\azure-databricks-monitoring\scripts\metrics.properties to the Databricks file system by entering the following command:
-
-    ```bash
-    databricks fs cp --overwrite azure-databricks-monitoring/scripts/metrics.properties dbfs:/azure-databricks-job/
-    ```
-
-3. While you haven't yet decided on a name for your Databricks cluster, select one now. You'll enter the name below in the Databricks file system path for your cluster. Copy the initialization script from azure\azure-databricks-monitoring\scripts\spark.metrics to the Databricks file system by entering the following command:
-
-    ```bash
-    databricks fs cp --overwrite azure-databricks-monitoring/scripts/spark-metrics.sh dbfs:/databricks/init/<cluster-name>/spark-metrics.sh
-    ```
+1. The outputs of the build is a file named **azure-databricks-job-1.0-SNAPSHOT.jar** in the **./AzureDataBricksJob/target** directory.
 
 ### Create a Databricks cluster
 
@@ -278,7 +240,7 @@ For this section, you require the Log Analytics workspace ID and primary key. Th
 
 1. Select **Standard** for **Cluster Mode**.
 
-1. Set **Databricks runtime version** to **6.4 Extended Support (Scala 2.11, Apache Spark 2.4.5)**
+1. Set **Databricks runtime version** to **7.3 Extended Support (Scala 2.12, Apache Spark 3.0.1)**
 
 1. Deselect **Enable autoscaling**.
 
@@ -288,11 +250,15 @@ For this section, you require the Log Analytics workspace ID and primary key. Th
 
 1. Set **Driver Type** to **Same as worker**
 
-1. Click on **Advanced Options** then **Init Scripts**.
+   #### Optional - Configure Azure Log Analytics
 
-1. Enter **dbfs:/databricks/init/\<cluster-name\>/spark-metrics.sh**, substituting the cluster name created in step 1 for **\<cluster-name\>**.
+   1. Follow the instructions in [Monitoring Azure Databricks](https://github.com/mspnp/spark-monitoring) to build the monitoring library and upload the resulting library files to your workspace.
 
-1. Click the **Add** button.
+   1. Click on **Advanced Options** then **Init Scripts**.
+
+   1. Enter **dbfs:/databricks/spark-monitoring/spark-monitoring.sh**.
+
+   1. Click the **Add** button.
 
 1. Click the **Create Cluster** button.
 
@@ -306,13 +272,11 @@ For this section, you require the Log Analytics workspace ID and primary key. Th
 
 4. In the **Library Source** control, select **Maven**.
 
-5. Under the **Maven Coordinates** text box, enter `com.microsoft.azure:azure-eventhubs-spark_2.11:2.3.21`.
+5. Under the **Maven Coordinates** text box, enter `com.microsoft.azure:azure-eventhubs-spark_2.12:2.3.21`.
 
 6. Select **Install**.
 
-7. Repeat steps 3 - 6 for the `com.microsoft.azure.cosmosdb:azure-cosmos-cassandra-spark-helper:1.0.0` Maven coordinate.
-
-8. Repeat steps 3 - 6 for the `com.datastax.spark:spark-cassandra-connector_2.11:2.3.2` Maven coordinate.
+8. Repeat steps 3 - 6 for the `com.datastax.spark:spark-cassandra-connector-assembly_2.12:3.0.1` Maven coordinate.
 
 9. Repeat steps 3 - 5 for the `org.geotools:gt-shapefile:23.0` Maven coordinate.
 
@@ -338,14 +302,10 @@ For this section, you require the Log Analytics workspace ID and primary key. Th
 
 1. Change **Library Source** to **DBFS/ADLS**, confirm that Library Type is **Jar** and enter `dbfs:/azure-databricks-job/azure-databricks-job-1.0-SNAPSHOT.jar` in the **File Path** text box and select **Add**.
 
-1. Under **Dependent Libraries** click **Add** again.
-
-1. Change **Library Source** to **DBFS/ADLS**, confirm that Library Type is **Jar** and enter `dbfs:/azure-databricks-job/azure-databricks-monitoring-0.9.jar` in the **File Path** text box and select **Add**.
-
 1. In the **Parameters** field, enter the following (replace **\<Cosmos DB Cassandra host name\>** with a value from above):
 
     ```shell
-    ["-n","jar:file:/dbfs/azure-databricks-job/cb_2020_36_cousub_500k.zip!/cb_2020_36_cousub_500k.shp","--taxi-ride-consumer-group","taxi-ride-eh-cg","--taxi-fare-consumer-group","taxi-fare-eh-cg","--window-interval","1 minute","--cassandra-host","<Cosmos DB Cassandra host name>"]
+    ["-n","jar:file:/dbfs/azure-databricks-job/cb_2020_36_cousub_500k.zip!/cb_2020_36_cousub_500k.shp","--taxi-ride-consumer-group","taxi-ride-eh-cg","--taxi-fare-consumer-group","taxi-fare-eh-cg","--window-interval","1 hour","--cassandra-host","<Cosmos DB Cassandra host name>"]
     ```
 
 1. Under **Cluster**, click the drop down arrow and select the cluster created the **Create a Databricks cluster** section.

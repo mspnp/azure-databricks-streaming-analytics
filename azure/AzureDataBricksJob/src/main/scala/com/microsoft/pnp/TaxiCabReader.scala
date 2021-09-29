@@ -1,7 +1,6 @@
 package com.microsoft.pnp
 
 import com.datastax.spark.connector.cql.CassandraConnector
-import com.microsoft.pnp.log4j.LoggingConfiguration
 import org.apache.spark.eventhubs.{EventHubsConf, EventPosition}
 import org.apache.spark.metrics.source.{AppAccumulators, AppMetrics}
 import org.apache.spark.sql.catalyst.expressions.{CsvToStructs, Expression}
@@ -15,13 +14,6 @@ object TaxiCabReader {
   private def withExpr(expr: Expression): Column = new Column(expr)
 
   def main(args: Array[String]) {
-
-    // Configure our logging
-    TryWith(getClass.getResourceAsStream("/com/microsoft/pnp/azuredatabricksjob/log4j.properties")) {
-      c => {
-        LoggingConfiguration.configure(c)
-      }
-    }
 
     val conf = new JobConfiguration(args)
     val rideEventHubConnectionString = getSecret(
@@ -48,7 +40,7 @@ object TaxiCabReader {
     // please note :- when spark submit is used, spark session is created in the main method
     // what ever values that gets provided in the main while initiating spark should be able available by accessing
     // sparksession.getconf
-    val sparkConfForCassandraDriver = new SparkConf()
+    val sparkConfForCassandraDriver = new SparkConf(true)
       .set("spark.cassandra.connection.host", cassandraEndPoint)
       .set("spark.cassandra.connection.port", "10350")
       .set("spark.cassandra.connection.ssl.enabled", "true")
@@ -56,10 +48,10 @@ object TaxiCabReader {
       .set("spark.cassandra.auth.password", cassandraPassword)
       .set("spark.master", "local[10]")
       .set("spark.cassandra.output.batch.size.rows", "1")
-      .set("spark.cassandra.connection.connections_per_executor_max", "2")
+      .set("spark.cassandra.connection.remoteConnectionsPerExecutor", "2")
       .set("spark.cassandra.output.concurrent.writes", "5")
       .set("spark.cassandra.output.batch.grouping.buffer.size", "300")
-      .set("spark.cassandra.connection.keep_alive_ms", "5000")
+      .set("spark.cassandra.connection.keepAliveMS", "5000")
 
     // Initializing the connector in the driver . connector is serializable
     // will be sending it to foreach sink that gets executed in the workers.

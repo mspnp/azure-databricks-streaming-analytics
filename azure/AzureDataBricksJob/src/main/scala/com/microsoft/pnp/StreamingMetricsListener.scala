@@ -1,6 +1,5 @@
 package com.microsoft.pnp
 
-import com.microsoft.pnp.slf4j.MDCCloseableFactory
 import org.apache.spark.sql.streaming.StreamingQueryListener
 import org.apache.spark.sql.streaming.StreamingQueryListener._
 import org.slf4j.{Logger, LoggerFactory}

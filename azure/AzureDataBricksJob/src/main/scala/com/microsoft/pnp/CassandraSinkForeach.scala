@@ -21,7 +21,7 @@ class CassandraSinkForeach(con: CassandraConnector)
 
       ).bind(
         record.getString(2),
-        record.getTimestamp(1),
+        record.getTimestamp(1).toInstant(),
         record.getLong(3).asInstanceOf[AnyRef],
         record.getDouble(4).asInstanceOf[AnyRef],
         record.getDouble(5).asInstanceOf[AnyRef],
