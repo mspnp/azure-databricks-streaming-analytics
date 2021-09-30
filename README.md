@@ -312,7 +312,7 @@ Next, enter the secrets for Cosmos DB:
 
 1. Click Create
 
-1. Select the **Runs** tab and lick **Run Now**.
+1. Select the **Runs** tab and click **Run Now**.
 
 ### Run the data generator
 
