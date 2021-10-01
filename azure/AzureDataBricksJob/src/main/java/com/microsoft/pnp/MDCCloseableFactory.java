@@ -1,4 +1,4 @@
-package com.microsoft.pnp.slf4j;
+package com.microsoft.pnp;
 
 import org.slf4j.MDC;
 

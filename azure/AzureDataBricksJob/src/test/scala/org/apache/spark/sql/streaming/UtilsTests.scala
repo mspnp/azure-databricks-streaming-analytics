@@ -24,9 +24,9 @@ class UtilsTests[sql] extends SparkSuiteBase with Matchers {
       new StreamingQueryProgress(
         guid, guid,
         "streamTest", "time",
-        10, duration,
+        10, 10, duration,
         eventTime,
-        null, sourcearr, null
+        null, sourcearr, null, null
       )
     )
 

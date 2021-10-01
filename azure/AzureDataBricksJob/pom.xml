@@ -15,20 +15,14 @@
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         <encoding>UTF-8</encoding>
-        <scala.version>2.11.8</scala.version>
-        <scala.compat.version>2.11</scala.compat.version>
+        <scala.version>2.12.12</scala.version>
+        <scala.compat.version>2.12</scala.compat.version>
         <spec2.version>4.2.0</spec2.version>
     </properties>
     <dependencies>
         <dependency>
-            <groupId>com.microsoft.pnp</groupId>
-            <artifactId>azure-databricks-monitoring</artifactId>
-            <version>0.9</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
             <groupId>com.microsoft.azure</groupId>
-            <artifactId>azure-eventhubs-spark_2.11</artifactId>
+            <artifactId>azure-eventhubs-spark_${scala.compat.version}</artifactId>
             <version>2.3.21</version>
             <scope>provided</scope>
         </dependency>
@@ -46,19 +40,19 @@
         </dependency>
         <dependency>
             <groupId>com.databricks</groupId>
-            <artifactId>dbutils-api_2.11</artifactId>
+            <artifactId>dbutils-api_${scala.compat.version}</artifactId>
             <version>0.0.5</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.rogach</groupId>
-            <artifactId>scallop_2.11</artifactId>
+            <artifactId>scallop_${scala.compat.version}</artifactId>
             <version>3.5.1</version>
         </dependency>
         <dependency>
             <groupId>com.datastax.spark</groupId>
-            <artifactId>spark-cassandra-connector_2.11</artifactId>
-            <version>2.3.2</version>
+            <artifactId>spark-cassandra-connector_2.12</artifactId>
+            <version>3.0.1</version>
             <scope>provided</scope>
         </dependency>
         <dependency>

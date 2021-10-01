@@ -157,11 +157,6 @@ class UnivocityParser(
         // This one will lose microseconds parts.
         // See https://issues.apache.org/jira/browse/SPARK-10681.
         Try(options.timestampFormat.parse(datum).getTime * 1000L)
-          .getOrElse {
-            // If it fails to parse, then tries the way used in 2.0 and 1.x for backwards
-            // compatibility.
-            DateTimeUtils.stringToTime(datum).getTime * 1000L
-          }
       }
 
     case _: DateType => (d: String) =>
@@ -169,11 +164,6 @@ class UnivocityParser(
         // This one will lose microseconds parts.
         // See https://issues.apache.org/jira/browse/SPARK-10681.x
         Try(DateTimeUtils.millisToDays(options.dateFormat.parse(datum).getTime))
-          .getOrElse {
-            // If it fails to parse, then tries the way used in 2.0 and 1.x for backwards
-            // compatibility.
-            DateTimeUtils.millisToDays(DateTimeUtils.stringToTime(datum).getTime)
-          }
       }
 
     case _: StringType => (d: String) =>
