@@ -45,9 +45,9 @@
       "location": "[parameters('logAnalyticsWorkspaceRegion')]",
       "properties": {
           "sku": {
-              "name": "Free"
+              "name": "pergb2018"
           },
-          "retentionInDays": 7
+          "retentionInDays": 30
       }
     },
     {
