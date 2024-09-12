@@ -47,7 +47,7 @@
         <dependency>
             <groupId>org.rogach</groupId>
             <artifactId>scallop_${scala.compat.version}</artifactId>
-            <version>3.5.1</version>
+            <version>5.1.0</version>
         </dependency>
         <dependency>
             <groupId>com.datastax.spark</groupId>
